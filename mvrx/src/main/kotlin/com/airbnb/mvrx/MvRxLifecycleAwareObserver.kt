@@ -46,7 +46,6 @@ internal class MvRxLifecycleAwareObserver<T : Any>(
     private var lastUndeliveredValue: T? = null
     private var lastValue: T? = lastDeliveredValue
     private val locked = AtomicBoolean(true)
-    private val isLocked  get() = locked.get()
     private val isUnlocked get() = !locked.get()
 
     override fun onSubscribe(d: Disposable) {
@@ -79,18 +78,19 @@ internal class MvRxLifecycleAwareObserver<T : Any>(
         }
     }
 
-    override fun onNext(t: T) {
+    override fun onNext(value: T) {
         if (isUnlocked) {
           // Don't emit on the first value we deliver, if we had already delivered this value before AND
           // the observer is set to not always deliver when unlocked.
-          if (!deliveredFirstValue.getAndSet(true) && !alwaysDeliverLastValueWhenUnlocked && t == lastValue) {
-            requireSourceObserver().onNext(t)
-            onDeliver(t)
+          val ignoreValue = !deliveredFirstValue.getAndSet(true) && !alwaysDeliverLastValueWhenUnlocked && value == lastValue
+          if (!ignoreValue) {
+            requireSourceObserver().onNext(value)
+            onDeliver(value)
           }
         } else {
-            lastUndeliveredValue = t
+            lastUndeliveredValue = value
         }
-        lastValue = t
+        lastValue = value
     }
 
     override fun onError(e: Throwable) {
