@@ -26,7 +26,7 @@ interface MvRxView : MvRxViewModelStoreOwner, LifecycleOwner {
 
     /**
      * A globally unique id for this MvRxView. If your MvRxView is being recreated due to a lifecycle event (e.g. rotation)
-     * you should assign a consistent id. Likely this means you should save the id in on save instance state. The
+     * you should assign a consistent id. Likely this means you should save the id in onSaveInstance state. The
      * viewId will not be accessed until a subscribe method is called.
      */
     val mvrxViewId: String
