@@ -80,8 +80,8 @@ internal class MvRxLifecycleAwareObserver<T : Any>(
 
     override fun onNext(value: T) {
         if (isUnlocked) {
-          // Don't emit on the first value we deliver, if we had already delivered this value before AND
-          // the observer is set to not always deliver when unlocked.
+          // Don't emit on the first value we deliver, if we had already delivered this value before (under a different
+          // subscription) AND the observer is set to not always deliver when unlocked.
           val ignoreValue = !deliveredFirstValue.getAndSet(true) && !alwaysDeliverLastValueWhenUnlocked && value == lastValue
           if (!ignoreValue) {
             requireSourceObserver().onNext(value)
