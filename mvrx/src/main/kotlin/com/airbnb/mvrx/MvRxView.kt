@@ -23,6 +23,14 @@ private val handler = Handler(Looper.getMainLooper(), Handler.Callback { message
  * will automatically subscribe to all state changes in the ViewModel and call [invalidate].
  */
 interface MvRxView : MvRxViewModelStoreOwner, LifecycleOwner {
+
+    /**
+     * A globally unique id for this MvRxView. If your MvRxView is being recreated due to a lifecycle event (e.g. rotation)
+     * you should assign a consistent id. Likely this means you should save the id in on save instance state. The
+     * viewId will not be accessed until a subscribe method is called.
+     */
+    val mvrxViewId: String
+
     /**
      * Override this to handle any state changes from MvRxViewModels created through MvRx Fragment delegates.
      */
@@ -44,7 +52,7 @@ interface MvRxView : MvRxViewModelStoreOwner, LifecycleOwner {
      *
      * Default: false.
      */
-    fun <S : MvRxState> BaseMvRxViewModel<S>.subscribe(uniqueOnly: Boolean = false, subscriber: (S) -> Unit) = subscribe(this@MvRxView, uniqueOnly, subscriber)
+    fun <S : MvRxState> BaseMvRxViewModel<S>.subscribe(uniqueOnly: Boolean = false, subscriber: (S) -> Unit) = subscribe(this@MvRxView, mvrxViewId, uniqueOnly, subscriber)
 
     /**
      * Subscribes to state changes for only a specific property and calls the subscribe with
@@ -61,7 +69,7 @@ interface MvRxView : MvRxViewModelStoreOwner, LifecycleOwner {
         prop1: KProperty1<S, A>,
         uniqueOnly: Boolean = false,
         subscriber: (A) -> Unit
-    ) = selectSubscribe(this@MvRxView, prop1, uniqueOnly, subscriber)
+    ) = selectSubscribe(this@MvRxView, prop1, mvrxViewId, uniqueOnly, subscriber)
 
     /**
      * Subscribe to changes in an async property. There are optional parameters for onSuccess
@@ -79,7 +87,7 @@ interface MvRxView : MvRxViewModelStoreOwner, LifecycleOwner {
         uniqueOnly: Boolean = false,
         onFail: ((Throwable) -> Unit)? = null,
         onSuccess: ((T) -> Unit)? = null
-    ) = asyncSubscribe(this@MvRxView, asyncProp, uniqueOnly, onFail, onSuccess)
+    ) = asyncSubscribe(this@MvRxView, asyncProp, mvrxViewId, uniqueOnly, onFail, onSuccess)
 
     /**
      * Subscribes to state changes for two properties.
@@ -96,7 +104,7 @@ interface MvRxView : MvRxViewModelStoreOwner, LifecycleOwner {
         prop2: KProperty1<S, B>,
         uniqueOnly: Boolean = false,
         subscriber: (A, B) -> Unit
-    ) = selectSubscribe(this@MvRxView, prop1, prop2, uniqueOnly, subscriber)
+    ) = selectSubscribe(this@MvRxView, prop1, prop2, mvrxViewId, uniqueOnly, subscriber)
 
     /**
      * Subscribes to state changes for three properties.
@@ -114,7 +122,7 @@ interface MvRxView : MvRxViewModelStoreOwner, LifecycleOwner {
         prop3: KProperty1<S, C>,
         uniqueOnly: Boolean = false,
         subscriber: (A, B, C) -> Unit
-    ) = selectSubscribe(this@MvRxView, prop1, prop2, prop3, uniqueOnly, subscriber)
+    ) = selectSubscribe(this@MvRxView, prop1, prop2, prop3, mvrxViewId, uniqueOnly, subscriber)
 
     /**
      * Subscribes to state changes for four properties.
@@ -133,5 +141,5 @@ interface MvRxView : MvRxViewModelStoreOwner, LifecycleOwner {
         prop4: KProperty1<S, D>,
         uniqueOnly: Boolean = false,
         subscriber: (A, B, C, D) -> Unit
-    ) = selectSubscribe(this@MvRxView, prop1, prop2, prop3, prop4, uniqueOnly, subscriber)
+    ) = selectSubscribe(this@MvRxView, prop1, prop2, prop3, prop4, mvrxViewId, uniqueOnly, subscriber)
 }

@@ -26,7 +26,7 @@ inline fun <T, reified VM : BaseMvRxViewModel<S>, reified S : MvRxState> T.fragm
     crossinline keyFactory: () -> String = { viewModelClass.java.name }
 ) where T : Fragment, T : MvRxView = lifecycleAwareLazy(this) {
     MvRxViewModelProvider.get(viewModelClass.java, S::class.java, FragmentViewModelContext(this.requireActivity(), _fragmentArgsProvider(), this), keyFactory())
-        .apply { subscribe(this@fragmentViewModel, subscriber = { postInvalidate() }) }
+        .apply { subscribe(this@fragmentViewModel, mvrxViewId, subscriber = { postInvalidate() }) }
 }
 
 /**
@@ -39,7 +39,7 @@ inline fun <T, reified VM : BaseMvRxViewModel<S>, S : MvRxState> T.existingViewM
 ) where T : Fragment, T : MvRxView = lifecycleAwareLazy(this) {
     val factory = MvRxFactory { throw IllegalStateException("ViewModel for ${requireActivity()}[${keyFactory()}] does not exist yet!") }
     ViewModelProviders.of(requireActivity(), factory).get(keyFactory(), viewModelClass.java)
-        .apply { subscribe(this@existingViewModel, subscriber = { postInvalidate() }) }
+        .apply { subscribe(this@existingViewModel, mvrxViewId, subscriber = { postInvalidate() }) }
 }
 
 /**
@@ -51,7 +51,7 @@ inline fun <T, reified VM : BaseMvRxViewModel<S>, reified S : MvRxState> T.activ
 ) where T : Fragment, T : MvRxView = lifecycleAwareLazy(this) {
     if (requireActivity() !is MvRxViewModelStoreOwner) throw IllegalArgumentException("Your Activity must be a MvRxViewModelStoreOwner!")
     MvRxViewModelProvider.get(viewModelClass.java, S::class.java, ActivityViewModelContext(requireActivity(), _activityArgsProvider(keyFactory)), keyFactory())
-        .apply { subscribe(this@activityViewModel, subscriber = { postInvalidate() }) }
+        .apply { subscribe(this@activityViewModel, mvrxViewId, subscriber = { postInvalidate() }) }
 }
 
 /**

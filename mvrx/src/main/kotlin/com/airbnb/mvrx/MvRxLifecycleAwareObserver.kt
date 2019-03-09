@@ -21,8 +21,10 @@ import java.util.concurrent.atomic.AtomicReference
  * than the [activeState] (as defined by [Lifecycle.State.isAtLeast()]) it will deliver values to the [sourceObserver] or [onNext] lambda.
  * When in a lower lifecycle state, the most recent update will be saved, and delivered when active again.
  */
-internal class MvRxLifecycleAwareObserver<T>(
+internal class MvRxLifecycleAwareObserver<T : Any>(
     private var owner: LifecycleOwner?,
+    lastDeliveredValue: T?,
+    private val onDeliver: (T) -> Unit,
     private val activeState: Lifecycle.State = DEFAULT_ACTIVE_STATE,
     private val alwaysDeliverLastValueWhenUnlocked: Boolean = false,
     private var sourceObserver: Observer<T>?
@@ -30,16 +32,18 @@ internal class MvRxLifecycleAwareObserver<T>(
 
     constructor(
         owner: LifecycleOwner,
+        lastDeliveredValue: T?,
+        onDeliver: (T) -> Unit,
         activeState: Lifecycle.State = DEFAULT_ACTIVE_STATE,
         alwaysDeliverLastValueWhenUnlocked: Boolean = false,
         onComplete: Action = Functions.EMPTY_ACTION,
         onSubscribe: Consumer<in Disposable> = Functions.emptyConsumer(),
         onError: Consumer<in Throwable> = Functions.ON_ERROR_MISSING,
         onNext: Consumer<T> = Functions.emptyConsumer()
-    ) : this(owner, activeState, alwaysDeliverLastValueWhenUnlocked, LambdaObserver<T>(onNext, onError, onComplete, onSubscribe))
+    ) : this(owner, lastDeliveredValue, onDeliver, activeState, alwaysDeliverLastValueWhenUnlocked, LambdaObserver<T>(onNext, onError, onComplete, onSubscribe))
 
     private var lastUndeliveredValue: T? = null
-    private var lastValue: T? = null
+    private var lastValue: T? = lastDeliveredValue
     private val locked = AtomicBoolean(true)
 
     override fun onSubscribe(d: Disposable) {
@@ -78,6 +82,7 @@ internal class MvRxLifecycleAwareObserver<T>(
         } else {
             lastUndeliveredValue = t
         }
+        onDeliver(t)
         lastValue = t
     }
 
