@@ -17,7 +17,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 
 /**
- * An wrapper around an [Observer] associated with a [LifecycleOwner]. It has an [activeState], and when in a lifecycle state greater
+ * A wrapper around an [Observer] associated with a [LifecycleOwner]. It has an [activeState], and when in a lifecycle state greater
  * than the [activeState] (as defined by [Lifecycle.State.isAtLeast()]) it will deliver values to the [sourceObserver] or [onNext] lambda.
  * When in a lower lifecycle state, the most recent update will be saved, and delivered when active again.
  */
@@ -42,9 +42,12 @@ internal class MvRxLifecycleAwareObserver<T : Any>(
         onNext: Consumer<T> = Functions.emptyConsumer()
     ) : this(owner, lastDeliveredValue, onDeliver, activeState, alwaysDeliverLastValueWhenUnlocked, LambdaObserver<T>(onNext, onError, onComplete, onSubscribe))
 
+    private var deliveredFirstValue = AtomicBoolean(false)
     private var lastUndeliveredValue: T? = null
     private var lastValue: T? = lastDeliveredValue
     private val locked = AtomicBoolean(true)
+    private val isLocked  get() = locked.get()
+    private val isUnlocked get() = !locked.get()
 
     override fun onSubscribe(d: Disposable) {
         if (DisposableHelper.setOnce(this, d)) {
@@ -77,12 +80,16 @@ internal class MvRxLifecycleAwareObserver<T : Any>(
     }
 
     override fun onNext(t: T) {
-        if (!locked.get()) {
+        if (isUnlocked) {
+          // Don't emit on the first value we deliver, if we had already delivered this value before AND
+          // the observer is set to not always deliver when unlocked.
+          if (!deliveredFirstValue.getAndSet(true) && !alwaysDeliverLastValueWhenUnlocked && t == lastValue) {
             requireSourceObserver().onNext(t)
+            onDeliver(t)
+          }
         } else {
             lastUndeliveredValue = t
         }
-        onDeliver(t)
         lastValue = t
     }
 
