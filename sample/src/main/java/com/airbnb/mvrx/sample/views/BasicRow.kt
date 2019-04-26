@@ -8,6 +8,7 @@ import android.widget.TextView
 import com.airbnb.epoxy.CallbackProp
 import com.airbnb.epoxy.ModelView
 import com.airbnb.epoxy.TextProp
+import com.airbnb.mvrx.sample.EpoxyViewModel
 import com.airbnb.mvrx.sample.R
 
 @ModelView(autoLayout = ModelView.Size.MATCH_WIDTH_WRAP_HEIGHT)
@@ -41,5 +42,21 @@ class BasicRow @JvmOverloads constructor(
     @CallbackProp
     fun setClickListener(clickListener: OnClickListener?) {
         setOnClickListener(clickListener)
+    }
+}
+
+data class BasicRowView(
+        val title: String = "",
+        val subtitle: String = "",
+        val onClick: () -> Unit
+) : EpoxyViewModel(R.layout.item_basic_row) {
+    val _titleView by bind<TextView>(R.id.title)
+    val _subtitleView by bind<TextView>(R.id.subtitle)
+
+    override fun bind() {
+        _titleView?.text = title
+        _subtitleView?.text = subtitle
+        _subtitleView?.visibility = if (subtitle.isNullOrBlank()) View.GONE else View.VISIBLE
+        view?.setOnClickListener { onClick() }
     }
 }
